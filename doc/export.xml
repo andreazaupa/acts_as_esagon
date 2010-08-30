@@ -1,0 +1,178 @@
+<esagon>
+  <name>Tecnodim</name>
+  <connectionPoolSize>3</connectionPoolSize>
+  <repository>/tmp</repository>
+  <connectionProperties/>
+  <entities>
+    <entity personalized="false" preview="false" name="service" type="primary">
+      <label>Servizi</label>
+      <table>services</table>
+      <idName>id</idName>
+      <idType>integer</idType>
+      <idColumn>id</idColumn>
+      <title>title</title>
+      <category>T</category>
+      <attribute name="title" nullable="true" client-type="textfield">
+        <label>Titolo</label>
+        <column>title</column>
+        <type>string</type>
+        <update>true</update>
+        <insert>true</insert>
+        <unique>false</unique>
+        <width>0</width>
+        <height>0</height>
+        <searchable>false</searchable>
+      </attribute>
+      <attribute name="meta" nullable="true" client-type="textarea">
+        <label>Meta</label>
+        <column>metadescription</column>
+        <type>string</type>
+        <update>true</update>
+        <insert>true</insert>
+        <unique>false</unique>
+        <width>0</width>
+        <height>0</height>
+        <searchable>false</searchable>
+      </attribute>
+      <attribute name="body" nullable="true" client-type="textarea">
+        <label>Testo</label>
+        <column>body</column>
+        <type>string</type>
+        <update>true</update>
+        <insert>true</insert>
+        <unique>false</unique>
+        <width>0</width>
+        <height>0</height>
+        <searchable>false</searchable>
+      </attribute>
+    </entity>
+    <entity personalized="false" preview="false" name="link_category" type="primary">
+      <label>Categorie di link</label>
+      <table>link_categories</table>
+      <idName>id</idName>
+      <idType>integer</idType>
+      <idColumn>id</idColumn>
+      <title>title</title>
+      <category>T</category>
+      <attribute name="title" nullable="true" client-type="textfield">
+        <label>Titolo</label>
+        <column>title</column>
+        <type>string</type>
+        <update>true</update>
+        <insert>true</insert>
+        <unique>false</unique>
+        <width>0</width>
+        <height>0</height>
+        <searchable>false</searchable>
+      </attribute>
+    </entity>
+    <entity personalized="false" preview="false" name="link" type="primary">
+      <label>Links</label>
+      <table>links</table>
+      <idName>id</idName>
+      <idType>integer</idType>
+      <idColumn>id</idColumn>
+      <title>title</title>
+      <category>T</category>
+      <attribute name="title" nullable="true" client-type="textfield">
+        <label>Titolo</label>
+        <column>title</column>
+        <type>string</type>
+        <update>true</update>
+        <insert>true</insert>
+        <unique>false</unique>
+        <width>0</width>
+        <height>0</height>
+        <searchable>false</searchable>
+      </attribute>
+      <attribute name="link" nullable="true" client-type="textfield">
+        <label>Link</label>
+        <column>link</column>
+        <type>string</type>
+        <update>true</update>
+        <insert>true</insert>
+        <unique>false</unique>
+        <width>0</width>
+        <height>0</height>
+        <searchable>false</searchable>
+      </attribute>
+      <attribute name="link_category_id" nullable="true" client-type="listbox">
+        <label>Categoria</label>
+        <column>link_category_id</column>
+        <type>integer</type>
+        <update>true</update>
+        <insert>true</insert>
+        <unique>false</unique>
+        <values-sql>select id, title from link_categories</values-sql>
+        <width>0</width>
+        <height>0</height>
+        <searchable>false</searchable>
+      </attribute>
+    </entity>
+    <entity personalized="false" preview="false" name="asset" type="primary">
+      <label>Contenuti</label>
+      <table>assets</table>
+      <idName>id</idName>
+      <idType>integer</idType>
+      <idColumn>id</idColumn>
+      <title>title</title>
+      <category>T</category>
+      <attribute name="title" nullable="true" client-type="textfield">
+        <label>Titolo</label>
+        <column>title</column>
+        <type>string</type>
+        <update>true</update>
+        <insert>true</insert>
+        <unique>false</unique>
+        <width>0</width>
+        <height>0</height>
+        <searchable>false</searchable>
+      </attribute>
+      <attribute name="description" nullable="true" client-type="textfield">
+        <label>Descrizione</label>
+        <column>description</column>
+        <type>string</type>
+        <update>true</update>
+        <insert>true</insert>
+        <unique>false</unique>
+        <width>0</width>
+        <height>0</height>
+        <searchable>false</searchable>
+      </attribute>
+    </entity>
+  </entities>
+  <relations>
+    <relation name="service_asset">
+      <label>Servizi - Contenuti</label>
+      <table>service_assets</table>
+      <idName>id</idName>
+      <idType>integer</idType>
+      <idColumn>id</idColumn>
+      <partecipant>service</partecipant>
+      <partecipant>asset</partecipant>
+      <attribute name="position" nullable="true" client-type="intfield">
+        <label>Posizione</label>
+        <column>position</column>
+        <type>integer</type>
+        <update>true</update>
+        <insert>true</insert>
+        <unique>false</unique>
+        <width>0</width>
+        <height>0</height>
+        <searchable>false</searchable>
+      </attribute>
+      <attribute name="gallery" nullable="true" client-type="checkbox">
+        <label>Galleria</label>
+        <column>gallery</column>
+        <type>boolean</type>
+        <update>true</update>
+        <insert>true</insert>
+        <unique>false</unique>
+        <width>0</width>
+        <height>0</height>
+        <searchable>false</searchable>
+      </attribute>
+      <notify>false</notify>
+    </relation>
+  </relations>
+</esagon>
