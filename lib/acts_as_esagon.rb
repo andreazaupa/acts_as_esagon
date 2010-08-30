@@ -62,11 +62,26 @@ module ActsAsEsagon
     # - :height => #Fixnum (altezza standard)
     # - :searchable => *true* o false (indica se includere il campo nelle tendine di ricerca, default false per i campi con :repository non nulla)
     def attribute(options = {})
-      @attributes[options.delete :name] = options
+      add_attribute options.delete(:name), options
     end
     
     def method_missing(name, *args, &block)
-      @attributes[name.to_s] = args[0] if !args.nil? && args.size > 0 && (args[0].is_a? Hash)
+      add_attribute(name.to_s, args[0]) if !args.nil? && args.size > 0
+    end
+    
+    private
+    
+    def add_attribute(n, v)
+      @attributes[n] = v if v.is_a? Hash
+      @klass.columns_hash.each_key do |k|
+        md = k.match("#{n}_([a-z]{2})")
+        if md then
+          @attributes[k] ||= v.clone
+          @attributes[k].each do |ak, av|
+            @attributes[k][ak] = "#{av} (#{md[1]})"
+          end
+        end
+      end
     end
   end
 
