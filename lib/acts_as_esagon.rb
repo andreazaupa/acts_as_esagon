@@ -11,7 +11,8 @@ module ActsAsEsagon
   end
 
   class Binding
-    attr_reader :klass, :type, :properties, :attributes
+    instance_methods.each { |m| undef_method m unless m =~ /^__|object_id|nil\?/}
+    attr_reader :__klass__, :__type__, :__properties__, :__attributes__
     
     # La mappa delle proprietà dell'entità/relazione prevede le seguenti opzioni:
     # - :personalized => true o *false* (entità presonalizzata o meno)
@@ -29,10 +30,10 @@ module ActsAsEsagon
     # - :links => #String (collegamenti esterni)
     # - :command => #String (comando di apertura)
     def initialize(klass, type, options = {})
-      @klass = klass
-      @type = type
-      @properties = options
-      @attributes = {}
+      @__klass__ = klass
+      @__type__ = type
+      @__properties__ = options
+      @__attributes__ = {}
       yield(self) if block_given?
     end
 
@@ -55,32 +56,44 @@ module ActsAsEsagon
     # - :insert => *true* o false (indica se includere il campo nelle istruzioni di insert)
     # - :formula => #String (espressione SQL se il campo è calcolato)
     # - :unique => true o *false* (indica se includere il campo è univoco)
-    # - :values => #String (valori ammessi, secondo il formato: value_1|label_1#value_2|label_2#...#value_n|label_n)
+    # - :values => #Hash (valori ammessi, convertiti secondo il formato: value_1|label_1#value_2|label_2#...#value_n|label_n)
     # - :values_sql => #String (espressione SQL dei valori ammessi come lookup, secondo il formato: select <value>, <label> from <lookup_table>..)
     # - :repository => #String (percorso della cartella dei contenuti, relativo alla erpository dell'applicazione)
     # - :width => #Fixnum (larghezza standard)
     # - :height => #Fixnum (altezza standard)
     # - :searchable => *true* o false (indica se includere il campo nelle tendine di ricerca, default false per i campi con :repository non nulla)
     def attribute(options = {})
-      add_attribute options.delete(:name), options
+      add_attribute options.delete(:name), options if options.is_a? Hash
     end
     
     def method_missing(name, *args, &block)
-      add_attribute(name.to_s, args[0]) if !args.nil? && args.size > 0
+      unless args.nil?
+        if args[0].is_a?(Hash)
+          label, options = nil, args[0]
+        else
+          label, options = args[0].to_s, args[1]
+        end
+        options ||= {}
+        if options.is_a? Hash
+          options[:label] = label unless label.blank?
+          add_attribute(name.to_s, options)
+        end
+      end
     end
     
     private
     
     def add_attribute(n, v)
-      @attributes[n] = v if v.is_a? Hash
-      @klass.columns_hash.each_key do |k|
-        md = k.match("#{n}_([a-z]{2})")
-        if md then
-          @attributes[k] ||= v.clone
-          @attributes[k].each do |ak, av|
-            @attributes[k][ak] = "#{av} (#{md[1]})"
+      if @__klass__.columns_hash.each_key.include?(n)
+        @__attributes__[n] = v
+        @__klass__.columns_hash.each_key do |k|
+          if k.match("#{n}_([a-z]{2})") then
+            @__attributes__[k] ||= v.clone
+            @__attributes__[k].each { |ak, av| @__attributes__[k][ak] = "#{av} (#{$1})" }
           end
         end
+      else
+        puts "Warning: trying to describe non-existing #{@__klass__}##{n}!"
       end
     end
   end
@@ -104,12 +117,15 @@ module ActsAsEsagon
   
   module SingletonMethods
     def has_esagon_bindings?(type)
-      !@binding.nil? && @binding.type == type
+      !@binding.nil? && @binding.__type__ == type
     end
     
     def to_xml
+      columns_hash.each_key do |k|
+        puts "Warning: #{self}##{k} was not specified and will take default values, did u miss something?" unless NON_EXPORTABLE_ATTRIBUTES =~ k || @binding.__attributes__.keys.include?(k)
+      end
       builder = Builder::XmlMarkup.new :indent => 2, :margin => 2
-      case @binding.type
+      case @binding.__type__
         when :entity then build_entity(builder)
         when :relation then build_relation(builder)
       end
@@ -117,53 +133,53 @@ module ActsAsEsagon
     
     private
     
-    NON_EXPORTABLE_ATTRIBUTES = [%r{^id$}, %r{_lm$}i, %r{_ol$}i, %r{_ow$}i, %r{^created_at$}, %r{^updated_at$}]
+    NON_EXPORTABLE_ATTRIBUTES = %r{^id|.+_lm|.+_ol|.+_ow|created_at|updated_at$}
     
     def build_entity(builder)
-      builder.entity build_options(@binding.properties, :personalized => false, :preview => false, :name => self.name.underscore, :type => :primary) do |e|
-        e.ord @binding.properties[:order] if !@binding.properties[:order].blank?
-        e.label @binding.properties[:label] || self.name.underscore
+      builder.entity build_options(@binding.__properties__, :personalized => false, :preview => false, :name => self.name.underscore, :type => :primary) do |e|
+        e.ord @binding.__properties__[:order] if !@binding.__properties__[:order].blank?
+        e.label @binding.__properties__[:label] || self.name.underscore
         e.table self.table_name
-        e.schema @binding.properties[:schema] if !@binding.properties[:schema].blank?
-        e.catalog @binding.properties[:catalog] if !@binding.properties[:catalog].blank?
-        e.partition @binding.properties[:partition] if !@binding.properties[:partition].blank?
+        e.schema @binding.__properties__[:schema] if !@binding.__properties__[:schema].blank?
+        e.catalog @binding.__properties__[:catalog] if !@binding.__properties__[:catalog].blank?
+        e.partition @binding.__properties__[:partition] if !@binding.__properties__[:partition].blank?
         e.idName 'id'
         e.idType 'integer'
         e.idColumn self.primary_key
-        e.idGenerator @binding.properties[:id_generator] if !@binding.properties[:id_generator].blank?
-        e.customMapping @binding.properties[:custom_mapping] if !@binding.properties[:custom_mapping].blank?
-        e.notify true if @binding.properties[:notify] == true
-        e.editRole @binding.properties[:edit_role] if !@binding.properties[:edit_role].blank?
-        e.publishRole @binding.properties[:publish_role] if !@binding.properties[:publish_role].blank?
-        e.title @binding.properties[:title] || 'id'
-        e.links @binding.properties[:links] if !@binding.properties[:links].blank?
-        e.command @binding.properties[:command] if !@binding.properties[:command].blank?
+        e.idGenerator @binding.__properties__[:id_generator] if !@binding.__properties__[:id_generator].blank?
+        e.customMapping @binding.__properties__[:custom_mapping] if !@binding.__properties__[:custom_mapping].blank?
+        e.notify true if @binding.__properties__[:notify] == true
+        e.editRole @binding.__properties__[:edit_role] if !@binding.__properties__[:edit_role].blank?
+        e.publishRole @binding.__properties__[:publish_role] if !@binding.__properties__[:publish_role].blank?
+        e.title @binding.__properties__[:title] || 'id'
+        e.links @binding.__properties__[:links] if !@binding.__properties__[:links].blank?
+        e.command @binding.__properties__[:command] if !@binding.__properties__[:command].blank?
         e.category 'T'
         columns_hash.each { |n, c| build_attribute(e, n, c) }
       end
     end
     
     def build_relation(builder)
-      builder.relation build_options(@binding.properties, :name => self.name.underscore) do |r|
-        r.label @binding.properties[:label] || self.name.underscore
+      builder.relation build_options(@binding.__properties__, :name => self.name.underscore) do |r|
+        r.label @binding.__properties__[:label] || self.name.underscore
         r.table self.table_name
-        r.schema @binding.properties[:schema] if !@binding.properties[:schema].blank?
-        r.catalog @binding.properties[:catalog] if !@binding.properties[:catalog].blank?
-        r.partition @binding.properties[:partition] if !@binding.properties[:partition].blank?
+        r.schema @binding.__properties__[:schema] if !@binding.__properties__[:schema].blank?
+        r.catalog @binding.__properties__[:catalog] if !@binding.__properties__[:catalog].blank?
+        r.partition @binding.__properties__[:partition] if !@binding.__properties__[:partition].blank?
         r.idName 'id'
         r.idType 'integer'
         r.idColumn self.primary_key
-        r.idGenerator @binding.properties[:id_generator] if !@binding.properties[:id_generator].blank?
-        r.customMapping @binding.properties[:custom_mapping] if !@binding.properties[:custom_mapping].blank?
-        r.notify true if @binding.properties[:notify] == true
-        @binding.klass.reflections.each { |k, v, m| r.partecipant k.to_s if v.macro == :belongs_to }
+        r.idGenerator @binding.__properties__[:id_generator] if !@binding.__properties__[:id_generator].blank?
+        r.customMapping @binding.__properties__[:custom_mapping] if !@binding.__properties__[:custom_mapping].blank?
+        r.notify true if @binding.__properties__[:notify] == true
+        @binding.__klass__.reflections.each { |k, v, m| r.partecipant k.to_s if v.macro == :belongs_to }
         columns_hash.each { |n, c| build_attribute(r, n, c) }
       end
     end
     
     def build_attribute(b, n, c)
-      attribute = @binding.attributes[n] || {}
-      if exportable?(n, attribute) then
+      attribute = @binding.__attributes__[n] || {}
+      if exportable?(n, attribute)
         b.attribute build_options(attribute, :name => n, :nullable => c.null, :client_type => default_client_type(n, c)) do |a|
           a.label attribute[:label] || n.humanize
           a.format attribute[:format] if !attribute[:format].blank?
@@ -174,7 +190,7 @@ module ActsAsEsagon
           a.insert false if attribute[:insert] == false
           a.formula attribute[:formula] if !attribute[:formula].blank?
           a.unique true if attribute[:unique] == true
-          a.values attribute[:values] if !attribute[:values].blank?
+          a.values attribute[:values].flat_map { |k, v| "#{k}|#{v}" }.join('#') if !attribute[:values].blank?
           a.send :'values-sql', attribute[:values_sql] if !attribute[:values_sql].blank?
           a.generated attribute[:generated] if !attribute[:generated].blank?
           a.length c.limit if !c.limit.blank?
@@ -189,13 +205,15 @@ module ActsAsEsagon
             a.searchable attribute[:repository].blank?
           end
         end
+      else
+        puts "Info: skipping non-exportable #{self}##{n}"
       end
     end
     
     def exportable?(n, attribute)
       name = attribute[:name] || n
-      attribute[:export] != false && !NON_EXPORTABLE_ATTRIBUTES.inject(false) { |c, expr| c |= expr.match(name) } &&
-      (@binding.type == :entity || !@binding.klass.reflections.find { |k, v| v.macro == :belongs_to })
+      attribute[:export] != false && NON_EXPORTABLE_ATTRIBUTES !~ n &&
+      (@binding.__type__ == :entity || !@binding.__klass__.reflections.find { |k, v| v.macro == :belongs_to })
     end
     
     def build_options(source, options = {})
@@ -212,7 +230,7 @@ module ActsAsEsagon
     end
     
     def default_client_type(n, c)
-      attribute = @binding.attributes[n] || {}
+      attribute = @binding.__attributes__[n] || {}
       if !attribute[:repository].blank? then
         'file'
       else
