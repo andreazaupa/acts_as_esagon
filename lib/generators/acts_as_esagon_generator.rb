@@ -10,9 +10,8 @@ class ActsAsEsagonGenerator < Rails::Generators::Base
   
   def generate_migration
     if options.migration? then
-      if list_of_models.size > 0 then
-        t = Time.now
-        template "migration.rb", "db/migrate/#{t.strftime('%Y%m%d')}#{'%06d' % (t.hour * 3600 + t.min * 60 + t.sec)}_#{migration_name.underscore}.rb"
+      if list_of_models.size > 0
+        template "migration.rb", "db/migrate/#{Time.now.strftime('%Y%m%d%H%M%S')}_#{migration_name.underscore}.rb"
       else
         puts "No need to migrate: #{list_of_models(nil, true).map { |m| m.classify }.join(',')}"
       end
