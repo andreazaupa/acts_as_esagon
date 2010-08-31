@@ -87,7 +87,7 @@ module ActsAsEsagon
       if @__klass__.columns_hash.each_key.include?(n)
         @__attributes__[n] = v
         @__klass__.columns_hash.each_key do |k|
-          if k.match("#{n}_([a-z]{2})") then
+          if k.match("^#{n}_([a-z]{2})$") then
             @__attributes__[k] ||= v.clone
             @__attributes__[k].each { |ak, av| @__attributes__[k][ak] = "#{av} (#{$1})" }
           end
