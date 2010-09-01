@@ -31,6 +31,6 @@ class ActsAsEsagonGenerator < Rails::Generators::Base
   end
   
   def migration_name
-    "AddEsagonBindingsTo#{list_of_models.map { |m| m.classify }.join('And')}"
+    "AddEsagonBindingsTo#{list_of_models.map { |m| m.classify }.join('And')}".slice(0, 127)
   end
 end
