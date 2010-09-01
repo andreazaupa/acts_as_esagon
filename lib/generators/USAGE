@@ -8,7 +8,7 @@ Example (XML sctructure file generation):
         tmp/esagon.xml
 
 Example (database migration):
-    rails generate acts_as_esagon <Model> --migration
+    rails generate acts_as_esagon [Model] --migration
 
     This will create:
         db/migrate/yyyyMMddssssss_add_esagon_bindings_to_<model>.rb
