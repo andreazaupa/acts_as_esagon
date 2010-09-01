@@ -122,7 +122,7 @@ module ActsAsEsagon
     
     def to_xml
       columns_hash.each_key do |k|
-        puts "Warning: #{self}##{k} was not specified and will take default values, did u miss something?" unless NON_EXPORTABLE_ATTRIBUTES =~ k || @binding.__attributes__.keys.include?(k)
+        puts "Warning: #{self}##{k} was not specified and will take default values, did u miss something?" if exportable?(k) && !@binding.__attributes__.keys.include?(k)
       end
       builder = Builder::XmlMarkup.new :indent => 2, :margin => 2
       case @binding.__type__
@@ -210,7 +210,7 @@ module ActsAsEsagon
       end
     end
     
-    def exportable?(n, attribute)
+    def exportable?(n, attribute = {})
       name = attribute[:name] || n
       attribute[:export] != false && NON_EXPORTABLE_ATTRIBUTES !~ n &&
       (@binding.__type__ == :entity || !@binding.__klass__.reflections.find { |k, v| v.macro == :belongs_to })
