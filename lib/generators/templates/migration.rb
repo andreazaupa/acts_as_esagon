@@ -7,18 +7,23 @@ class <%= migration_name %> < ActiveRecord::Migration
 
   def self.up
 <% list_of_models.each do |model| -%>
-    change_table(:<%= model.classify.constantize.table_name %>) do |t|
-       t.datetime :<%= model %>_LM
-       t.string :<%= model %>_OW
-       t.string :<%= model %>_OL
+    say_with_time 'Adding Esagon fields to <%= model.classify %>...' do
+      change_table(:<%= model.classify.constantize.table_name %>) do |t|
+         t.datetime :<%= model %>_LM
+         t.string :<%= model %>_OW
+         t.string :<%= model %>_OL
+      end
     end
 <% end -%>
   end
   
   def self.down
 <% list_of_models.each do |model| -%>
+    say_with_time 'Removing Esagon fields from <%= model.classify %>...' do
 <% ['LM', 'OW', 'OL'].each do |e| -%>
-    remove_column :<%= model.classify.constantize.table_name %>, :<%= "#{model}_#{e}" %>
-<% end -%><% end -%>
+      remove_column :<%= model.classify.constantize.table_name %>, :<%= "#{model}_#{e}" %>
+<% end -%>
+    end
+<% end -%>
   end
 end
