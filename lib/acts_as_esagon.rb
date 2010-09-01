@@ -212,7 +212,7 @@ module ActsAsEsagon
     
     def exportable?(n, attribute = {})
       name = attribute[:name] || n
-      attribute[:export] != false && NON_EXPORTABLE_ATTRIBUTES !~ n &&
+      attribute[:export] != false && NON_EXPORTABLE_ATTRIBUTES !~ n.downcase &&
       (@binding.__type__ == :entity || !@binding.__klass__.reflections.find { |k, v| v.macro == :belongs_to && n.match("^#{k}.*_id$") })
     end
     
