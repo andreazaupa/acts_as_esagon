@@ -7,11 +7,12 @@ class <%= migration_name %> < ActiveRecord::Migration
 
   def self.up
 <% list_of_models.each do |model| -%>
-    say_with_time 'Adding Esagon fields to <%= model.classify %>...' do
-      change_table(:<%= model.classify.constantize.table_name %>) do |t|
-         t.datetime :<%= model %>_LM
-         t.string :<%= model %>_OW
-         t.string :<%= model %>_OL
+<% klass = model.classify.constantize -%>
+    say_with_time 'Adding Esagon fields to <%= klass %>...' do
+      change_table(:<%= klass.table_name %>) do |t|
+         t.datetime :<%= klass.esagon_binding_properties[:name] %>_LM
+         t.string :<%= klass.esagon_binding_properties[:name] %>_OW
+         t.string :<%= klass.esagon_binding_properties[:name] %>_OL
       end
     end
 <% end -%>
@@ -19,9 +20,10 @@ class <%= migration_name %> < ActiveRecord::Migration
   
   def self.down
 <% list_of_models.each do |model| -%>
+<% klass = model.classify.constantize -%>
     say_with_time 'Removing Esagon fields from <%= model.classify %>...' do
 <% ['LM', 'OW', 'OL'].each do |e| -%>
-      remove_column :<%= model.classify.constantize.table_name %>, :<%= "#{model}_#{e}" %>
+      remove_column :<%= klass.table_name %>, :<%= "#{klass.esagon_binding_properties[:name]}_#{e}" %>
 <% end -%>
     end
 <% end -%>

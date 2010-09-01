@@ -1,8 +1,8 @@
 class ActsAsEsagonGenerator < Rails::Generators::Base
   source_root File.expand_path('../templates', __FILE__)
   argument :name, :type => :string, :optional => true, :desc => 'Model name'
-  class_option :xml, :type => :boolean, :default => false, :desc => "Indicates when to generates the Esagon XML file descriptor"
-  class_option :migration, :type => :boolean, :default => false, :desc => "Indicates when to generates the database migration file"
+  class_option :xml, :type => :boolean, :default => false, :desc => "Indicates when to generate the Esagon XML file descriptor"
+  class_option :migration, :type => :boolean, :default => false, :desc => "Indicates when to generate the database migration file"
   
   def generate_xml
     template "esagon.xml.erb", "tmp/esagon.xml" if options.xml?
@@ -26,7 +26,7 @@ class ActsAsEsagonGenerator < Rails::Generators::Base
     ar_models = all_models.select { |m| m.classify.constantize < ActiveRecord::Base }
     ar_models = ar_models.select { |model| model.classify.constantize.methods.select { |m| m == :has_esagon_bindings? }.length > 0 }
     ar_models = ar_models.select { |model| model.classify.constantize.has_esagon_bindings?(type) } unless type.nil?
-    ar_models = ar_models.select { |model| !model.classify.constantize.columns_hash.has_key?("#{model}_LM") } if options.migration? && !force
+    ar_models = ar_models.select { |model| !model.classify.constantize.columns_hash.has_key?("#{model.classify.constantize.esagon_binding_properties[:name]}_LM") } if options.migration? && !force
     ar_models
   end
   

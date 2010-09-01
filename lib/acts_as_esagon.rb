@@ -12,7 +12,7 @@ module ActsAsEsagon
 
   class Binding
     instance_methods.each { |m| undef_method m unless m =~ /^__|object_id|nil\?/}
-    attr_reader :__klass__, :__type__, :__properties__, :__attributes__
+    attr_reader :__klass__, :__type__, :__properties__, :__attributes__, :__partecipants__
     
     # La mappa delle proprietà dell'entità/relazione prevede le seguenti opzioni:
     # - :personalized => true o *false* (entità presonalizzata o meno)
@@ -32,8 +32,10 @@ module ActsAsEsagon
     def initialize(klass, type, options = {})
       @__klass__ = klass
       @__type__ = type
+      options[:name] ||= klass.name.underscore
       @__properties__ = options
       @__attributes__ = {}
+      @__partecipants__ = {}
       yield(self) if block_given?
     end
 
@@ -64,6 +66,10 @@ module ActsAsEsagon
     # - :searchable => *true* o false (indica se includere il campo nelle tendine di ricerca, default false per i campi con :repository non nulla)
     def attribute(options = {})
       add_attribute options.delete(:name), options if options.is_a? Hash
+    end
+    
+    def partecipant(p)
+      @__partecipants__.merge! p if p.is_a? Hash
     end
     
     def method_missing(name, *args, &block)
@@ -116,6 +122,14 @@ module ActsAsEsagon
   end
   
   module SingletonMethods
+    def esagon_binding_properties
+      @binding.__properties__
+    end
+
+    def esagon_binding_attributes
+      @binding.__attributes__
+    end
+
     def has_esagon_bindings?(type)
       !@binding.nil? && @binding.__type__ == type
     end
@@ -172,7 +186,7 @@ module ActsAsEsagon
         r.idGenerator @binding.__properties__[:id_generator] if !@binding.__properties__[:id_generator].blank?
         r.customMapping @binding.__properties__[:custom_mapping] if !@binding.__properties__[:custom_mapping].blank?
         r.notify true if @binding.__properties__[:notify] == true
-        @binding.__klass__.reflections.each { |k, v, m| r.partecipant k.to_s if v.macro == :belongs_to }
+        @binding.__klass__.reflections.each { |k, v, m| r.partecipant(@binding.__partecipants__[k] || k.to_s) if v.macro == :belongs_to }
         columns_hash.each { |n, c| build_attribute(r, n, c) }
       end
     end
