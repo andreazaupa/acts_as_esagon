@@ -109,8 +109,9 @@ module ActsAsEsagon
     def acts_as_esagon_entity(options = {}, &block)
       send :include, EntityInstanceMethods
       send :extend, SingletonMethods
-
+      
       @binding = Binding.new(self, :entity, options, &block)
+      setup
     end
 
     def acts_as_esagon_relation(options = {}, &block)
@@ -118,7 +119,14 @@ module ActsAsEsagon
       send :extend, SingletonMethods
       
       @binding = Binding.new(self, :relation, options, &block)
-    end    
+      setup
+    end
+    
+    private
+    
+    def setup
+      default_scope :conditions => { eval(":#{@binding.__properties__[:name]}_OL") => 'true' } if columns_hash.keys.include? "#{@binding.__properties__[:name]}_OL"
+    end
   end
   
   module SingletonMethods
