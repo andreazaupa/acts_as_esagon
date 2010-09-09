@@ -206,7 +206,7 @@ module ActsAsEsagon
           a.label attribute[:label] || n.humanize
           a.format attribute[:format] if !attribute[:format].blank?
           a.column c.name
-          a.type attribute[:type] || c.type.to_s
+          a.type attribute[:type] || c.type == :decimal ? 'big_decimal' : c.type.to_s
           a.send :'column-type', c.sql_type.to_s
           a.update false if attribute[:update] == false
           a.insert false if attribute[:insert] == false

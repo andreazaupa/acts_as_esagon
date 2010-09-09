@@ -12,7 +12,7 @@ class <%= migration_name %> < ActiveRecord::Migration
       change_table(:<%= klass.table_name %>) do |t|
          t.datetime :<%= klass.esagon_binding_properties[:name] %>_LM
          t.string :<%= klass.esagon_binding_properties[:name] %>_OW
-         t.string :<%= klass.esagon_binding_properties[:name] %>_OL
+         t.string :<%= klass.esagon_binding_properties[:name] %>_OL, :default => 'true'
       end
     end
 <% end -%>
