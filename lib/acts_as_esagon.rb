@@ -218,7 +218,11 @@ module ActsAsEsagon
           a.length c.limit if !c.limit.blank?
           a.precision c.precision if !c.precision.blank?
           a.scale c.scale if !c.scale.blank?
-          a.repository attribute[:repository] if !attribute[:repository].blank?
+          unless attribute[:repository].blank?
+            repository = attribute[:repository].to_s
+            repository = "/#{repository}" unless repository.start_with?('/')
+            a.repository repository
+          end
           a.width attribute[:width] if !attribute[:width].blank?
           a.height attribute[:height] if !attribute[:height].blank?
           if !attribute[:searchable].nil? then
@@ -257,14 +261,17 @@ module ActsAsEsagon
         'file'
       else
         case c.type
-          when :string, :integer then !attribute[:values].blank? || !attribute[:values_sql].blank? ? 'combobox' : 'textfield'
+          when :string then !attribute[:values].blank? || !attribute[:values_sql].blank? ? 'combobox' : 'textfield'
+          when :integer then !attribute[:values].blank? || !attribute[:values_sql].blank? ? 'combobox' : 'intfield'
+          when :float, :double then 'doublefield'
+          when :decimal then 'decimalfield'
           when :text then 'textarea'
           when :date then 'datefield'
           when :time then 'timefield'
           when :datetime, :timestamp then 'datetimefield'
           when :boolean then 'checkbox'
           else
-            nil
+            'textfield'
         end
       end
     end
