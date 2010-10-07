@@ -1,12 +1,12 @@
 <esagon>
   <entities>
 <% list_of_models(:entity).each do |m| -%>
-<%= m.classify.constantize.to_xml -%>
+<%= m.camelize.constantize.to_xml -%>
 <% end -%>
   </entities>
   <relations>
 <% list_of_models(:relation).each do |m| -%>
-<%= m.classify.constantize.to_xml -%>
+<%= m.camelize.constantize.to_xml -%>
 <% end -%>
   </relations>
 </esagon>
