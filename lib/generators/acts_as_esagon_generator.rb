@@ -13,7 +13,7 @@ class ActsAsEsagonGenerator < Rails::Generators::Base
       if list_of_models.size > 0
         template "migration.rb", "db/migrate/#{Time.now.strftime('%Y%m%d%H%M%S')}_#{migration_name.underscore}.rb"
       else
-        puts "No need to migrate: #{list_of_models(nil, true).map { |m| m.camelize }.join(',')}"
+        puts "No need to migrate: #{list_of_models(nil, true).map { |m| m.camelize }.join(', ')}"
       end
     end
   end
@@ -26,7 +26,7 @@ class ActsAsEsagonGenerator < Rails::Generators::Base
     ar_models = all_models.select { |m| m.camelize.constantize < ActiveRecord::Base }
     ar_models = ar_models.select { |model| model.camelize.constantize.methods.select { |m| m == :has_esagon_bindings? }.length > 0 }
     ar_models = ar_models.select { |model| model.camelize.constantize.has_esagon_bindings?(type) } unless type.nil?
-    ar_models = ar_models.select { |model| !model.camelize.constantize.columns_hash.has_key?("#{model.camelize.constantize.esagon_binding_properties[:name]}_LM") } if options.migration? && !force
+    ar_models = ar_models.select { |model| !model.camelize.constantize.columns_hash.has_key?("#{model.camelize.constantize.esagon_binding_properties[:name]}_LM") rescue false } if options.migration? && !force
     ar_models
   end
   
