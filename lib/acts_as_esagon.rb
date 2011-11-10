@@ -90,16 +90,20 @@ module ActsAsEsagon
     private
     
     def add_attribute(n, v)
-      if @__klass__.columns_hash.each_key.include?(n)
-        @__attributes__[n] = v
-        @__klass__.columns_hash.each_key do |k|
-          if k.match("^#{n}_([a-z]{2})$") then
-            @__attributes__[k] ||= v.clone
-            @__attributes__[k].each { |ak, av| @__attributes__[k][ak] = "#{av} (#{$1})" }
+      begin
+        if @__klass__.columns_hash.each_key.include?(n)
+          @__attributes__[n] = v
+          @__klass__.columns_hash.each_key do |k|
+            if k.match("^#{n}_([a-z]{2})$") then
+              @__attributes__[k] ||= v.clone
+              @__attributes__[k].each { |ak, av| @__attributes__[k][ak] = "#{av} (#{$1})" }
+            end
           end
+        else
+          puts "Warning: trying to describe non-existing #{@__klass__}##{n}!"
         end
-      else
-        puts "Warning: trying to describe non-existing #{@__klass__}##{n}!"
+      rescue Exception => e
+        puts "Error: #{e.message}"
       end
     end
   end
@@ -125,7 +129,11 @@ module ActsAsEsagon
     private
     
     def setup
-      default_scope :conditions => { eval(":#{@binding.__properties__[:name]}_OL") => 'true' } if columns_hash.keys.include? "#{@binding.__properties__[:name]}_OL"
+      begin
+        default_scope :conditions => { eval(":#{@binding.__properties__[:name]}_OL") => 'true' } if columns_hash.keys.include? "#{@binding.__properties__[:name]}_OL"
+      rescue Exception => e
+        puts "Error: #{e.message}"
+      end
     end
   end
   
@@ -143,16 +151,20 @@ module ActsAsEsagon
     end
     
     def to_xml
-      columns_hash.each_key do |k|
-        puts "Warning: #{self}##{k} was not specified and will take default values, did u miss something?" if exportable?(k) && !@binding.__attributes__.keys.include?(k)
-      end
-      builder = Builder::XmlMarkup.new :indent => 2, :margin => 2
-      case @binding.__type__
-        when :entity then build_entity(builder)
-        when :relation then build_relation(builder)
+      begin
+        columns_hash.each_key do |k|
+          puts "Warning: #{self}##{k} was not specified and will take default values, did u miss something?" if exportable?(k) && !@binding.__attributes__.keys.include?(k)
+        end
+        builder = Builder::XmlMarkup.new :indent => 2, :margin => 2
+        case @binding.__type__
+          when :entity then build_entity(builder)
+          when :relation then build_relation(builder)
+        end
+      rescue Exception => e
+        puts "Error: #{e.message}"
       end
     end
-    
+
     private
     
     NON_EXPORTABLE_ATTRIBUTES = %r{^id|.+_lm|.+_ol|.+_ow|created_at|updated_at$}
@@ -207,13 +219,13 @@ module ActsAsEsagon
           a.format attribute[:format] if !attribute[:format].blank?
           a.column c.name
           a.type attribute[:type] || c.type == :decimal ? 'big_decimal' : c.type.to_s
-          a.send :'column-type', c.sql_type.to_s
+          a.tag! 'column-type', c.sql_type.to_s
           a.update false if attribute[:update] == false
           a.insert false if attribute[:insert] == false
           a.formula attribute[:formula] if !attribute[:formula].blank?
           a.unique true if attribute[:unique] == true
           a.values attribute[:values].flat_map { |k, v| "#{k}|#{v}" }.join('#') if !attribute[:values].blank?
-          a.send :'values-sql', attribute[:values_sql] if !attribute[:values_sql].blank?
+          a.tag! 'values-sql', attribute[:values_sql] if !attribute[:values_sql].blank?
           a.generated attribute[:generated] if !attribute[:generated].blank?
           a.length c.limit if !c.limit.blank?
           a.precision c.precision if !c.precision.blank?
@@ -280,6 +292,12 @@ module ActsAsEsagon
 
   module EntityInstanceMethods
     # any method placed here will apply to instaces, like @hickwall
+
+    def lastmodified_at
+      name = self.class.esagon_binding_properties[:name]
+      lm = send("#{name}_LM".to_sym) if self.class.columns_hash.keys.include? "#{name}_LM"
+      lm ||= updated_at
+    end    
   end
 
   module RelationInstanceMethods
