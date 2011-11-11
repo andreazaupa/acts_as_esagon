@@ -1,0 +1,5 @@
+acts_as_esagon_entity :label => #{model_name.camelcase}, :title => 'id' do |e|
+  <%columns.each do |c|%>
+    e.<%=c%> '<%=c.camelcase%>'
+  <%end%>
+end
