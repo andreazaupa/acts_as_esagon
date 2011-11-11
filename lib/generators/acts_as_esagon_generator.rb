@@ -62,9 +62,13 @@ EOF
     if column.match(/content_type/) 
       aux={:export=>false}
     elsif column.match(/file_name/)
-      puts column
+      
+      begin
       if model_name.classify.constantize.attachment_definitions.include? column.gsub("_file_name","").to_sym
         aux= {:repositiory=>model_name.classify.constantize.attachment_definitions[column.gsub("_file_name","").to_sym][:url].split("/")[0..-2].join("/")}
+      end
+      rescue Exception=>e
+      puts "WARNING: check #{model_name} paperclip url ."
       end
     elsif column.match(/file_size/)
       aux={:export=>false}
