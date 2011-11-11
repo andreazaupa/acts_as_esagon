@@ -1,7 +1,18 @@
 ActsAsEsagon
 ============
+Linucs ActAsEsagon , now with awesome base configuration generator. 
 
-Introduction goes here.
+simple run 
+rails g acts_as_esagon only [lists of model_name] --configuration
+
+a.e.
+rails g acts_as_esagon only page video special_product special_product_variant --configuration 
+
+and then your model will contain acts_as_esagon inclusion ....
+
+you could ommit "only" params and all your models will be esagonized 
+
+not tested!  
 
 
 Example
